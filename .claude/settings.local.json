@@ -12,7 +12,9 @@
       "PowerShell(Resolve-DnsName *)",
       "PowerShell(Start-Process \"https://supabase.com/dashboard/project/lklbyrqawrxfyaqmmxzm/settings/database\")",
       "Bash(npm run *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
