@@ -6,6 +6,7 @@ export default function PaymentsPage() {
     <PhasePlaceholder
       title="Payments"
       subtitle="Investor payments applied to vehicle payoffs and floorplan reductions."
+      phase="Phase 3"
       icon={Wallet}
       features={[
         "Record investor payments with method and reference",

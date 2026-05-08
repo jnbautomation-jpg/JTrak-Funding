@@ -21,40 +21,52 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 
-const loginSchema = z.object({
-  email: z.string().email("Enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-})
+const signupSchema = z
+  .object({
+    email: z.string().email("Enter a valid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
 
-type LoginValues = z.infer<typeof loginSchema>
+type SignupValues = z.infer<typeof signupSchema>
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter()
   const [submitError, setSubmitError] = React.useState<string | null>(null)
 
-  const form = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+  const form = useForm<SignupValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { email: "", password: "", confirmPassword: "" },
   })
 
-  async function onSubmit(values: LoginValues) {
+  async function onSubmit(values: SignupValues) {
     setSubmitError(null)
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
     })
     if (error) {
       setSubmitError(error.message)
-      toast.error("Sign in failed", { description: error.message })
+      toast.error("Sign up failed", { description: error.message })
       return
     }
-    toast.success("Welcome back")
-    const next =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("next") || "/"
-        : "/"
-    router.replace(next)
+
+    if (!data.session) {
+      // Email confirmation required — let the user know.
+      toast.info("Check your email to confirm your account.", {
+        description: "Then sign in to finish setup.",
+      })
+      router.replace("/login")
+      return
+    }
+
+    toast.success("Account created")
+    router.replace("/onboarding")
     router.refresh()
   }
 
@@ -91,10 +103,10 @@ export default function LoginPage() {
           <div className="relative rounded-xl border border-border/70 bg-card/60 backdrop-blur-sm p-6 shadow-[0_1px_0_0_color-mix(in_oklch,var(--foreground)_4%,transparent)_inset,0_24px_64px_-32px_rgb(0_0_0/0.6)]">
             <div className="mb-5 flex flex-col gap-1">
               <h2 className="text-[15px] font-semibold tracking-tight">
-                Sign in to your account
+                Create your account
               </h2>
               <p className="text-[12px] text-muted-foreground">
-                Use your work email to access the dashboard.
+                Stand up your floorplan in under a minute.
               </p>
             </div>
 
@@ -131,15 +143,35 @@ export default function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center justify-between">
-                        <FormLabel className="text-[12px] font-medium text-muted-foreground">
-                          Password
-                        </FormLabel>
-                      </div>
+                      <FormLabel className="text-[12px] font-medium text-muted-foreground">
+                        Password
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="password"
-                          autoComplete="current-password"
+                          autoComplete="new-password"
+                          placeholder="At least 8 characters"
+                          className="h-10 text-[13px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-[11.5px]" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[12px] font-medium text-muted-foreground">
+                        Confirm password
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          autoComplete="new-password"
                           placeholder="••••••••"
                           className="h-10 text-[13px]"
                           {...field}
@@ -164,11 +196,11 @@ export default function LoginPage() {
                   {pending ? (
                     <>
                       <Loader2 className="size-3.5 animate-spin" />
-                      Signing in…
+                      Creating account…
                     </>
                   ) : (
                     <>
-                      Sign in
+                      Create account
                       <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                     </>
                   )}
@@ -183,12 +215,12 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-5 text-center text-[11.5px] text-muted-foreground/80">
-            Don&rsquo;t have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/signup"
+              href="/login"
               className="text-foreground/90 hover:text-primary transition-colors font-medium"
             >
-              Sign up
+              Sign in
             </Link>
           </p>
         </div>

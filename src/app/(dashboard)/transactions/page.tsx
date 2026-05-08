@@ -6,6 +6,7 @@ export default function TransactionsPage() {
     <PhasePlaceholder
       title="Transactions"
       subtitle="Every advance, payoff, and adjustment against your floorplan line."
+      phase="Phase 3"
       icon={ArrowLeftRight}
       features={[
         "Auto-recorded advances when vehicles are added",

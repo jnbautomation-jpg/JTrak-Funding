@@ -2,11 +2,13 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, ChevronRight, LogOut, Moon, Sun, Monitor } from "lucide-react"
 import { useTheme } from "next-themes"
+import { toast } from "sonner"
 
 import { cn, getInitials } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +34,10 @@ const PAGE_TITLES: Record<string, string> = {
 
 function Breadcrumb() {
   const pathname = usePathname()
-  const current = PAGE_TITLES[pathname] ?? "Dashboard"
+  let current = PAGE_TITLES[pathname] ?? "Dashboard"
+  if (!PAGE_TITLES[pathname]) {
+    if (pathname.startsWith("/vehicles/")) current = "Vehicle detail"
+  }
   return (
     <nav
       aria-label="Breadcrumb"
@@ -79,10 +84,22 @@ function ThemeToggleSubmenu() {
   )
 }
 
-function UserMenu() {
-  const userName = "Jay Bautomation"
-  const userEmail = "jnbautomation@gmail.com"
-  const initials = getInitials(userName)
+function UserMenu({ email }: { email: string }) {
+  const router = useRouter()
+  const userName = email.split("@")[0] || "User"
+  const initials = getInitials(userName.replace(/[._]/g, " "))
+
+  async function handleLogout() {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      toast.error("Sign out failed", { description: error.message })
+      return
+    }
+    toast.success("Signed out")
+    router.replace("/login")
+    router.refresh()
+  }
 
   return (
     <DropdownMenu>
@@ -93,11 +110,11 @@ function UserMenu() {
         )}
       >
         <span className="grid size-7 place-items-center rounded-md bg-gradient-to-br from-primary/30 to-primary/10 text-[11.5px] font-semibold tracking-tight text-primary ring-1 ring-primary/25">
-          {initials}
+          {initials.toUpperCase()}
         </span>
         <span className="hidden sm:flex flex-col items-start leading-none">
           <span className="text-[12.5px] font-medium text-foreground">
-            {userName.split(" ")[0]}
+            {userName}
           </span>
           <span className="text-[10.5px] text-muted-foreground">Owner</span>
         </span>
@@ -106,7 +123,7 @@ function UserMenu() {
         <DropdownMenuLabel className="flex flex-col gap-0.5">
           <span className="text-[13px] font-medium">{userName}</span>
           <span className="text-[11.5px] font-normal text-muted-foreground">
-            {userEmail}
+            {email}
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -115,7 +132,7 @@ function UserMenu() {
         <DropdownMenuItem
           variant="destructive"
           className="text-[13px]"
-          onClick={() => console.log("[stub] log out")}
+          onClick={handleLogout}
         >
           <LogOut className="size-3.5" />
           <span>Log out</span>
@@ -125,7 +142,7 @@ function UserMenu() {
   )
 }
 
-function MobileNav() {
+function MobileNav({ stats }: { stats?: { outstanding: number; creditLimit: number } }) {
   const [open, setOpen] = React.useState(false)
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -146,14 +163,20 @@ function MobileNav() {
         <div className="flex h-full flex-col">
           <SidebarBrand />
           <SidebarNav onNavigate={() => setOpen(false)} />
-          <SidebarFooter />
+          <SidebarFooter stats={stats} />
         </div>
       </SheetContent>
     </Sheet>
   )
 }
 
-export function Topbar() {
+export function Topbar({
+  userEmail,
+  stats,
+}: {
+  userEmail: string
+  stats?: { outstanding: number; creditLimit: number }
+}) {
   return (
     <header
       className={cn(
@@ -163,7 +186,7 @@ export function Topbar() {
       )}
     >
       <div className="flex items-center gap-3">
-        <MobileNav />
+        <MobileNav stats={stats} />
         <Breadcrumb />
       </div>
       <div className="flex items-center gap-2">
@@ -171,7 +194,7 @@ export function Topbar() {
           <span className="size-1.5 rounded-full bg-primary shadow-[0_0_0_3px_color-mix(in_oklch,var(--primary)_25%,transparent)]" />
           Live
         </span>
-        <UserMenu />
+        <UserMenu email={userEmail} />
       </div>
     </header>
   )

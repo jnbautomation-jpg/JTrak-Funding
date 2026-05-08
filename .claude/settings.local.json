@@ -10,7 +10,9 @@
       "PowerShell(taskkill *)",
       "PowerShell($src = \"C:\\\\Users\\\\xxsup\\\\Documents\\\\jtrak-funding\"; $dst = \"C:\\\\Users\\\\xxsup\\\\OneDrive\\\\Desktop\\\\JTrak Funding\"; robocopy $src $dst /E /MOVE /XD node_modules .next /NFL /NDL /NJH /NJS; if \\($LASTEXITCODE -lt 8\\) { Write-Output \"MOVE OK \\(robocopy exit $LASTEXITCODE\\)\" } else { Write-Output \"MOVE FAILED \\(robocopy exit $LASTEXITCODE\\)\" })",
       "PowerShell(Resolve-DnsName *)",
-      "PowerShell(Start-Process \"https://supabase.com/dashboard/project/lklbyrqawrxfyaqmmxzm/settings/database\")"
+      "PowerShell(Start-Process \"https://supabase.com/dashboard/project/lklbyrqawrxfyaqmmxzm/settings/database\")",
+      "Bash(npm run *)",
+      "Bash(git add *)"
     ]
   }
 }

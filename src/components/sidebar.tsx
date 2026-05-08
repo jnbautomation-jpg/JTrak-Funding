@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import { cn, formatMoney } from "@/lib/utils"
 
 type NavItem = {
   href: string
@@ -99,7 +99,25 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-export function SidebarFooter() {
+type FooterStats = {
+  outstanding: number
+  creditLimit: number
+}
+
+export function SidebarFooter({ stats }: { stats?: FooterStats }) {
+  if (!stats || stats.creditLimit <= 0) {
+    return (
+      <div className="mt-auto px-5 pb-5 pt-4">
+        <p className="px-1 text-[10.5px] text-muted-foreground/70">
+          JTrak Funding
+        </p>
+      </div>
+    )
+  }
+  const utilization = Math.min(
+    100,
+    Math.max(0, (stats.outstanding / stats.creditLimit) * 100)
+  )
   return (
     <div className="mt-auto px-5 pb-5 pt-4">
       <div className="rounded-md border border-border/60 bg-card/50 p-3">
@@ -108,32 +126,32 @@ export function SidebarFooter() {
             Credit line
           </span>
           <span className="text-[10.5px] tabular-nums text-muted-foreground">
-            71.1%
+            {utilization.toFixed(1)}%
           </span>
         </div>
         <div className="mt-2 h-1 rounded-full bg-muted/70 overflow-hidden">
           <div
             className="h-full rounded-full bg-primary"
-            style={{ width: "71.1%" }}
+            style={{ width: `${Math.max(2, utilization)}%` }}
           />
         </div>
         <p className="mt-2 text-[11px] tabular-nums text-foreground/90">
-          $284,500 <span className="text-muted-foreground">/ $400,000</span>
+          {formatMoney(stats.outstanding)}{" "}
+          <span className="text-muted-foreground">
+            / {formatMoney(stats.creditLimit)}
+          </span>
         </p>
       </div>
-      <p className="mt-3 px-1 text-[10.5px] text-muted-foreground/70">
-        v0.1 · Phase 1 preview
-      </p>
     </div>
   )
 }
 
-export function Sidebar() {
+export function Sidebar({ stats }: { stats?: FooterStats }) {
   return (
     <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[240px] flex-col bg-sidebar border-r border-sidebar-border">
       <SidebarBrand />
       <SidebarNav />
-      <SidebarFooter />
+      <SidebarFooter stats={stats} />
     </aside>
   )
 }
