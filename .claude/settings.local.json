@@ -1,8 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm --version)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --app --src-dir --import-alias \"@/*\" --eslint --use-npm --yes --turbopack false)"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\xxsup\\\\.claude\\\\projects\" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match \"jtrak|funding|floorplan\" } | Select-Object Name, LastWriteTime)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\xxsup\\\\OneDrive\\\\Desktop\" -Directory -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -match \"jtrak|funding|floor\" } | Select-Object Name, LastWriteTime, Attributes)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\xxsup\\\\OneDrive\\\\Desktop\" -Directory -Force | Where-Object { $_.Name -match \"\\(?i\\)jtrak|funding|floor\" } | Select-Object Name, LastWriteTime | Out-String)",
+      "PowerShell($attrs = \\(Get-Item \"C:\\\\Users\\\\xxsup\\\\OneDrive\\\\Desktop\\\\JTrak Funding\"\\).Attributes; Write-Output \"JTrak Funding attributes: $attrs\"; $eco = \\(Get-Item \"C:\\\\Users\\\\xxsup\\\\OneDrive\\\\Desktop\\\\jtrak-ecosystem\"\\).Attributes; Write-Output \"jtrak-ecosystem attributes: $eco\")",
+      "PowerShell($shell = New-Object -ComObject Shell.Application; $bin = $shell.Namespace\\(10\\); $items = $bin.Items\\(\\) | Where-Object { $_.Name -match \"\\(?i\\)jtrak|funding|floor\" } | Select-Object Name, ModifyDate, @{N='Path';E={$_.ExtendedProperty\\('System.Recycle.DeletedFrom'\\)}}; $items | Out-String)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(taskkill *)",
+      "PowerShell($src = \"C:\\\\Users\\\\xxsup\\\\Documents\\\\jtrak-funding\"; $dst = \"C:\\\\Users\\\\xxsup\\\\OneDrive\\\\Desktop\\\\JTrak Funding\"; robocopy $src $dst /E /MOVE /XD node_modules .next /NFL /NDL /NJH /NJS; if \\($LASTEXITCODE -lt 8\\) { Write-Output \"MOVE OK \\(robocopy exit $LASTEXITCODE\\)\" } else { Write-Output \"MOVE FAILED \\(robocopy exit $LASTEXITCODE\\)\" })",
+      "PowerShell(Resolve-DnsName *)",
+      "PowerShell(Start-Process \"https://supabase.com/dashboard/project/lklbyrqawrxfyaqmmxzm/settings/database\")"
     ]
   }
 }
