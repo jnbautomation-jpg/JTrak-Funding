@@ -1,18 +1,15 @@
 import Link from "next/link"
 import { differenceInCalendarDays } from "date-fns"
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
   Banknote,
   Car,
   CircleDollarSign,
-  Clock,
   PlusCircle,
+  TrendingUp,
 } from "lucide-react"
 
 import { StatCard } from "@/components/stat-card"
 import { AgingBucketCard } from "@/components/aging-bucket-card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -23,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { formatDate, formatMoney } from "@/lib/utils"
+import { cn, formatDate, formatMoney, formatProfit } from "@/lib/utils"
 import {
   getActiveVehicleCount,
   getAgingBuckets,
@@ -32,7 +29,8 @@ import {
   getOldestActiveInventory,
   getOutstandingBalance,
   getPrimaryFloorplan,
-  getRecentTransactions,
+  getRecentlySold,
+  getTotalProfitYTD,
 } from "@/lib/floorplan"
 
 const AGING_TONES: Record<string, "good" | "neutral" | "warning" | "bad"> = {
@@ -40,36 +38,6 @@ const AGING_TONES: Record<string, "good" | "neutral" | "warning" | "bad"> = {
   "31-60": "neutral",
   "61-90": "warning",
   "90+": "bad",
-}
-
-function TxBadge({ type }: { type: string }) {
-  if (type === "advance") {
-    return (
-      <Badge
-        variant="outline"
-        className="gap-1 border-amber-400/30 bg-amber-400/10 text-amber-300 font-medium"
-      >
-        <ArrowDownLeft className="size-3" />
-        Advance
-      </Badge>
-    )
-  }
-  if (type === "payoff") {
-    return (
-      <Badge
-        variant="outline"
-        className="gap-1 border-primary/30 bg-primary/10 text-primary font-medium"
-      >
-        <ArrowUpRight className="size-3" />
-        Payoff
-      </Badge>
-    )
-  }
-  return (
-    <Badge variant="outline" className="border-border bg-muted text-muted-foreground">
-      Adjustment
-    </Badge>
-  )
 }
 
 function DaysPill({ days }: { days: number }) {
@@ -109,16 +77,18 @@ export default async function DashboardPage() {
     activeCount,
     avgDays,
     buckets,
-    recent,
     oldest,
+    recentlySold,
+    profitYTD,
   ] = await Promise.all([
     getOutstandingBalance(floorplan.id),
     getAvailableCredit(floorplan.id, creditLimit),
     getActiveVehicleCount(floorplan.id),
     getAvgDaysOnLot(floorplan.id),
     getAgingBuckets(floorplan.id),
-    getRecentTransactions(floorplan.id, 5),
     getOldestActiveInventory(floorplan.id, 5),
+    getRecentlySold(floorplan.id, 5),
+    getTotalProfitYTD(floorplan.id),
   ])
 
   const utilizationPct = creditLimit > 0 ? (outstanding / creditLimit) * 100 : 0
@@ -128,7 +98,9 @@ export default async function DashboardPage() {
     0
   )
 
-  const isEmpty = activeCount === 0 && recent.length === 0
+  const isEmpty =
+    activeCount === 0 && recentlySold.length === 0 && oldest.length === 0
+  const profitYear = new Date().getFullYear()
 
   return (
     <div className="space-y-8">
@@ -175,15 +147,19 @@ export default async function DashboardPage() {
         <StatCard
           label="Active Vehicles"
           value={String(activeCount)}
-          subtext="in inventory"
+          subtext={
+            avgDays > 0
+              ? `${avgDays}d avg on lot`
+              : "in inventory"
+          }
           icon={Car}
+          accent={avgDays >= 60 ? "amber" : "default"}
         />
         <StatCard
-          label="Avg Days on Lot"
-          value={String(avgDays)}
-          subtext="across active inventory"
-          icon={Clock}
-          accent={avgDays >= 60 ? "amber" : "default"}
+          label={`Total Profit ${profitYear}`}
+          value={formatMoney(profitYTD)}
+          subtext="across paid-off vehicles"
+          icon={TrendingUp}
         />
       </section>
 
@@ -243,8 +219,8 @@ export default async function DashboardPage() {
                   Add your first vehicle to see live data
                 </h3>
                 <p className="text-[12.5px] text-muted-foreground">
-                  Recent transactions and oldest inventory will appear here once
-                  you start flooring vehicles.
+                  Recently sold and oldest inventory will appear here once you
+                  start flooring vehicles.
                 </p>
               </div>
               <Button render={<Link href="/vehicles" />} className="h-9 text-[13px]">
@@ -260,61 +236,81 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between px-5 py-4">
               <div className="flex flex-col gap-0.5">
                 <h3 className="text-[14px] font-semibold tracking-tight">
-                  Recent transactions
+                  Recently sold
                 </h3>
                 <p className="text-[11.5px] text-muted-foreground">
-                  Last 5 advances and payoffs across your floorplan.
+                  Last 5 vehicles paid off, with profit.
                 </p>
               </div>
             </div>
             <Separator className="bg-border/60" />
-            {recent.length === 0 ? (
+            {recentlySold.length === 0 ? (
               <div className="px-5 py-12 text-center text-[12.5px] text-muted-foreground">
-                No transactions yet.
+                No vehicles sold yet.
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent border-border/60">
                     <TableHead className="h-9 px-5 text-[10.5px] uppercase tracking-[0.12em] font-medium text-muted-foreground/80">
-                      Type
-                    </TableHead>
-                    <TableHead className="h-9 text-[10.5px] uppercase tracking-[0.12em] font-medium text-muted-foreground/80">
                       Vehicle
                     </TableHead>
                     <TableHead className="h-9 text-right text-[10.5px] uppercase tracking-[0.12em] font-medium text-muted-foreground/80">
-                      Amount
+                      Sale
+                    </TableHead>
+                    <TableHead className="h-9 text-right text-[10.5px] uppercase tracking-[0.12em] font-medium text-muted-foreground/80">
+                      Profit
                     </TableHead>
                     <TableHead className="h-9 pr-5 text-right text-[10.5px] uppercase tracking-[0.12em] font-medium text-muted-foreground/80">
-                      Date
+                      Sold
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recent.map((tx) => (
-                    <TableRow
-                      key={tx.id}
-                      className="border-border/40 hover:bg-accent/30 transition-colors"
-                    >
-                      <TableCell className="px-5 py-3">
-                        <TxBadge type={tx.type} />
-                      </TableCell>
-                      <TableCell className="py-3 text-[13px] font-medium text-foreground">
-                        {tx.vehicle ? describeVehicle(tx.vehicle) : "—"}
-                      </TableCell>
-                      <TableCell
-                        className={`py-3 text-right text-[13px] tabular-nums font-medium ${
-                          tx.type === "payoff" ? "text-primary" : "text-foreground"
-                        }`}
+                  {recentlySold.map((v) => {
+                    const sale = v.salePrice != null ? Number(v.salePrice) : null
+                    const profit =
+                      sale != null
+                        ? formatProfit(sale, Number(v.purchasePrice))
+                        : null
+                    return (
+                      <TableRow
+                        key={v.id}
+                        className="border-border/40 hover:bg-accent/30 transition-colors"
                       >
-                        {tx.type === "payoff" ? "+" : "−"}
-                        {formatMoney(Number(tx.amount))}
-                      </TableCell>
-                      <TableCell className="pr-5 py-3 text-right text-[12.5px] tabular-nums text-muted-foreground">
-                        {formatDate(tx.date)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        <TableCell className="px-5 py-3 text-[13px] font-medium text-foreground">
+                          <Link
+                            href={`/vehicles/${v.id}`}
+                            className="hover:text-primary transition-colors"
+                          >
+                            {describeVehicle(v)}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="py-3 text-right text-[13px] tabular-nums text-foreground">
+                          {sale != null ? formatMoney(sale) : "—"}
+                        </TableCell>
+                        <TableCell className="py-3 text-right">
+                          {profit ? (
+                            <span
+                              className={cn(
+                                "text-[13px] tabular-nums font-medium",
+                                profit.isProfit
+                                  ? "text-primary"
+                                  : "text-destructive"
+                              )}
+                            >
+                              {profit.formatted}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="pr-5 py-3 text-right text-[12px] tabular-nums text-muted-foreground">
+                          {v.paidOffDate ? formatDate(v.paidOffDate) : "—"}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             )}

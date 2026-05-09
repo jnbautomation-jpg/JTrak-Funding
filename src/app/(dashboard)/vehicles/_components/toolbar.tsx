@@ -16,7 +16,6 @@ import {
 
 const TABS: Array<{ key: string; label: string }> = [
   { key: "active", label: "Active" },
-  { key: "sold", label: "Sold" },
   { key: "paid_off", label: "Paid Off" },
   { key: "all", label: "All" },
 ]

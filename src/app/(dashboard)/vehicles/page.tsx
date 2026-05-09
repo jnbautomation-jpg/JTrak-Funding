@@ -22,7 +22,6 @@ type SearchParams = Promise<{
 
 const STATUS_FROM_TAB: Record<string, string | undefined> = {
   active: "active",
-  sold: "sold",
   paid_off: "paid_off",
   all: undefined,
 }
@@ -89,22 +88,26 @@ export default async function VehiclesPage({
   })
 
   const today = new Date()
-  const rows: VehicleRow[] = vehicles.map((v) => ({
-    id: v.id,
-    vin: v.vin,
-    year: v.year,
-    make: v.make,
-    model: v.model,
-    trim: v.trim,
-    mileage: v.mileage,
-    purchasePrice: Number(v.purchasePrice),
-    advanceAmount: Number(v.advanceAmount),
-    purchaseDate: v.purchaseDate.toISOString(),
-    source: v.source,
-    stockNumber: v.stockNumber,
-    status: v.status,
-    daysOnLot: Math.max(0, differenceInCalendarDays(today, v.purchaseDate)),
-  }))
+  const rows: VehicleRow[] = vehicles.map((v) => {
+    const reference = v.status === "paid_off" && v.saleDate ? v.saleDate : today
+    return {
+      id: v.id,
+      vin: v.vin,
+      year: v.year,
+      make: v.make,
+      model: v.model,
+      trim: v.trim,
+      mileage: v.mileage,
+      purchasePrice: Number(v.purchasePrice),
+      advanceAmount: Number(v.advanceAmount),
+      purchaseDate: v.purchaseDate.toISOString(),
+      source: v.source,
+      stockNumber: v.stockNumber,
+      status: v.status,
+      salePrice: v.salePrice != null ? Number(v.salePrice) : null,
+      daysOnLot: Math.max(0, differenceInCalendarDays(reference, v.purchaseDate)),
+    }
+  })
 
   const availableCredit = await getAvailableCredit(
     floorplan.id,

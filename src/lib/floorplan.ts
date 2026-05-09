@@ -123,3 +123,60 @@ export async function getOldestActiveInventory(
     take: limit,
   })
 }
+
+export async function getTotalProfitYTD(floorplanLineId: string) {
+  const startOfYear = new Date(new Date().getFullYear(), 0, 1)
+  const vehicles = await prisma.vehicle.findMany({
+    where: {
+      floorplanLineId,
+      status: "paid_off",
+      paidOffDate: { gte: startOfYear },
+    },
+    select: { salePrice: true, purchasePrice: true },
+  })
+  return vehicles.reduce((acc, v) => {
+    const sale = Number(v.salePrice ?? 0)
+    const purchase = Number(v.purchasePrice ?? 0)
+    return acc + (sale - purchase)
+  }, 0)
+}
+
+export async function getRecentlySold(floorplanLineId: string, limit = 5) {
+  return prisma.vehicle.findMany({
+    where: { floorplanLineId, status: "paid_off" },
+    orderBy: { paidOffDate: "desc" },
+    take: limit,
+  })
+}
+
+export async function getMonthlyPayoffTotal(floorplanLineId: string) {
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const startOfNext = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  const result = await prisma.transaction.aggregate({
+    where: {
+      floorplanLineId,
+      type: "payoff",
+      date: { gte: startOfMonth, lt: startOfNext },
+    },
+    _sum: { amount: true },
+  })
+  return Number(result._sum.amount ?? 0)
+}
+
+export async function getAvgDaysToPayoff(floorplanLineId: string) {
+  const vehicles = await prisma.vehicle.findMany({
+    where: {
+      floorplanLineId,
+      status: "paid_off",
+      paidOffDate: { not: null },
+    },
+    select: { purchaseDate: true, paidOffDate: true },
+  })
+  if (vehicles.length === 0) return 0
+  const total = vehicles.reduce((acc, v) => {
+    if (!v.paidOffDate) return acc
+    return acc + Math.max(0, differenceInCalendarDays(v.paidOffDate, v.purchaseDate))
+  }, 0)
+  return Math.round(total / vehicles.length)
+}

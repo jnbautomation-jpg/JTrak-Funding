@@ -51,7 +51,7 @@ model Vehicle {
   salePrice       Decimal?      @db.Decimal(10, 2)
   saleDate        DateTime?
   buyerName       String?
-  status          String        @default("active") // active, sold, paid_off, repo
+  status          String        @default("active") // active, paid_off, repo
   paidOffDate     DateTime?
   transactions    Transaction[]
   notes           String?

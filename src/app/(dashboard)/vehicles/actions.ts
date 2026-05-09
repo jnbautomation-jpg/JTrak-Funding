@@ -7,6 +7,10 @@ import { z } from "zod"
 import { requireUser } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getPrimaryFloorplan } from "@/lib/floorplan"
+import {
+  markVehicleAsPaidOff,
+  reverseVehiclePayoff,
+} from "@/lib/floorplan-mutations"
 
 const baseVehicleSchema = z.object({
   vin: z
@@ -138,6 +142,73 @@ export async function updateVehicle(input: UpdateInput): Promise<Result> {
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Failed to update vehicle",
+    }
+  }
+}
+
+const markAsSoldSchema = z.object({
+  vehicleId: z.string().min(1),
+  salePrice: z.number().positive("Sale price must be greater than zero"),
+  saleDate: z.coerce.date(),
+  buyerName: z.string().trim().max(120).optional().or(z.literal("")),
+})
+
+type MarkAsSoldInput = z.input<typeof markAsSoldSchema>
+type MarkAsSoldResult =
+  | { ok: true; profit: number; advanceAmount: number }
+  | { ok: false; error: string }
+
+export async function markVehicleAsSold(
+  input: MarkAsSoldInput
+): Promise<MarkAsSoldResult> {
+  await requireUser()
+  const parsed = markAsSoldSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" }
+  }
+  const data = parsed.data
+
+  try {
+    const { vehicle, transaction } = await markVehicleAsPaidOff({
+      vehicleId: data.vehicleId,
+      salePrice: data.salePrice,
+      saleDate: data.saleDate,
+      buyerName: data.buyerName || undefined,
+    })
+
+    revalidatePath("/")
+    revalidatePath("/vehicles")
+    revalidatePath(`/vehicles/${vehicle.id}`)
+    revalidatePath("/payments")
+
+    return {
+      ok: true,
+      profit: data.salePrice - Number(vehicle.purchasePrice),
+      advanceAmount: Number(transaction.amount),
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Failed to mark vehicle as sold",
+    }
+  }
+}
+
+type ReverseResult = { ok: true } | { ok: false; error: string }
+
+export async function reversePayoff(vehicleId: string): Promise<ReverseResult> {
+  await requireUser()
+  try {
+    await reverseVehiclePayoff(vehicleId)
+    revalidatePath("/")
+    revalidatePath("/vehicles")
+    revalidatePath(`/vehicles/${vehicleId}`)
+    revalidatePath("/payments")
+    return { ok: true }
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Failed to reverse payoff",
     }
   }
 }

@@ -48,3 +48,26 @@ export function getInitials(name: string) {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("")
 }
+
+export type ProfitInfo = {
+  amount: number
+  margin: number
+  isProfit: boolean
+  formatted: string
+}
+
+export function formatProfit(
+  salePrice: number | string,
+  purchasePrice: number | string
+): ProfitInfo {
+  const sale = typeof salePrice === "string" ? Number(salePrice) : salePrice
+  const purchase =
+    typeof purchasePrice === "string" ? Number(purchasePrice) : purchasePrice
+  const amount = (Number.isFinite(sale) ? sale : 0) - (Number.isFinite(purchase) ? purchase : 0)
+  const margin = purchase > 0 ? (amount / purchase) * 100 : 0
+  const isProfit = amount >= 0
+  const sign = amount < 0 ? "−" : ""
+  const abs = Math.abs(amount)
+  const formatted = `${sign}${moneyFormatter.format(abs)}`
+  return { amount, margin, isProfit, formatted }
+}

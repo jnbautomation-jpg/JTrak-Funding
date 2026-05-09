@@ -8,11 +8,12 @@ import {
   CheckCircle2,
   Clock,
   Tag,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react"
 
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -21,9 +22,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { formatDate, formatMoney } from "@/lib/utils"
+import { cn, formatDate, formatMoney, formatProfit } from "@/lib/utils"
 import { DeleteVehicleButton } from "./delete-button"
 import { VehicleInfoCard } from "./edit-form"
+import { MarkAsSoldButton, ReversePayoffButton } from "./sale-actions"
 
 type RouteParams = Promise<{ id: string }>
 type Search = Promise<{ edit?: string }>
@@ -39,20 +41,23 @@ function StatusBadge({ status }: { status: string }) {
       </Badge>
     )
   }
-  if (status === "sold") {
+  if (status === "paid_off") {
     return (
       <Badge
         variant="outline"
-        className="border-blue-400/30 bg-blue-400/10 text-blue-300"
+        className="border-zinc-500/30 bg-zinc-500/10 text-zinc-300"
       >
-        Sold
+        Paid Off
       </Badge>
     )
   }
-  if (status === "paid_off") {
+  if (status === "repo") {
     return (
-      <Badge variant="outline" className="border-border bg-muted text-muted-foreground">
-        Paid off
+      <Badge
+        variant="outline"
+        className="border-destructive/30 bg-destructive/10 text-destructive"
+      >
+        Repo
       </Badge>
     )
   }
@@ -125,18 +130,20 @@ export default async function VehicleDetailPage({
     .sort()
 
   const today = new Date()
-  const daysOnLot = Math.max(
-    0,
-    differenceInCalendarDays(today, vehicle.purchaseDate)
-  )
-  const daysSinceSold =
-    vehicle.saleDate != null
-      ? Math.max(0, differenceInCalendarDays(today, vehicle.saleDate))
-      : null
-  const profit =
-    vehicle.salePrice != null && vehicle.status === "paid_off"
-      ? Number(vehicle.salePrice) - Number(vehicle.purchasePrice)
-      : null
+  const isPaidOff = vehicle.status === "paid_off"
+  const purchasePrice = Number(vehicle.purchasePrice)
+  const advanceAmount = Number(vehicle.advanceAmount)
+  const salePrice = vehicle.salePrice != null ? Number(vehicle.salePrice) : null
+
+  const daysOnLot =
+    isPaidOff && vehicle.saleDate
+      ? Math.max(
+          0,
+          differenceInCalendarDays(vehicle.saleDate, vehicle.purchaseDate)
+        )
+      : Math.max(0, differenceInCalendarDays(today, vehicle.purchaseDate))
+
+  const profit = salePrice != null ? formatProfit(salePrice, purchasePrice) : null
 
   const detail = {
     id: vehicle.id,
@@ -146,11 +153,23 @@ export default async function VehicleDetailPage({
     model: vehicle.model,
     trim: vehicle.trim,
     mileage: vehicle.mileage,
-    purchasePrice: Number(vehicle.purchasePrice),
+    purchasePrice,
     purchaseDate: vehicle.purchaseDate.toISOString(),
     source: vehicle.source,
     stockNumber: vehicle.stockNumber,
     notes: vehicle.notes,
+  }
+
+  const markAsSoldVehicle = {
+    id: vehicle.id,
+    vin: vehicle.vin,
+    year: vehicle.year,
+    make: vehicle.make,
+    model: vehicle.model,
+    trim: vehicle.trim,
+    purchasePrice,
+    advanceAmount,
+    purchaseDate: vehicle.purchaseDate.toISOString(),
   }
 
   return (
@@ -198,6 +217,34 @@ export default async function VehicleDetailPage({
             initialEdit={edit === "1"}
             sources={sources}
           />
+
+          {isPaidOff ? (
+            <div className="rounded-lg border border-border/70 bg-card/60">
+              <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+                <h2 className="text-[14px] font-semibold tracking-tight">
+                  Sale information
+                </h2>
+              </div>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 px-5 py-5 text-[13px]">
+                <SaleField label="Sale price">
+                  <span className="tabular-nums">
+                    {salePrice != null ? formatMoney(salePrice) : "—"}
+                  </span>
+                </SaleField>
+                <SaleField label="Sale date">
+                  {vehicle.saleDate ? formatDate(vehicle.saleDate) : "—"}
+                </SaleField>
+                <SaleField label="Buyer">
+                  {vehicle.buyerName ? (
+                    vehicle.buyerName
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </SaleField>
+                <SaleField label="Days on lot">{daysOnLot}d</SaleField>
+              </dl>
+            </div>
+          ) : null}
 
           <div className="rounded-lg border border-border/70 bg-card/60 overflow-hidden">
             <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
@@ -267,23 +314,24 @@ export default async function VehicleDetailPage({
             <div className="mt-4 space-y-3 text-[13px]">
               <Stat
                 icon={Clock}
-                label="Days on lot"
+                label={isPaidOff ? "Days on lot (sold)" : "Days on lot"}
                 value={`${daysOnLot}d`}
               />
-              {daysSinceSold != null ? (
-                <Stat
-                  icon={CheckCircle2}
-                  label="Days since sold"
-                  value={`${daysSinceSold}d`}
-                />
-              ) : null}
-              {profit != null ? (
-                <Stat
-                  icon={CheckCircle2}
-                  label="Profit"
-                  value={formatMoney(profit)}
-                  highlight={profit >= 0}
-                />
+              {isPaidOff && profit ? (
+                <>
+                  <Stat
+                    icon={profit.isProfit ? TrendingUp : TrendingDown}
+                    label={profit.isProfit ? "Profit" : "Loss"}
+                    value={profit.formatted}
+                    tone={profit.isProfit ? "profit" : "loss"}
+                  />
+                  <Stat
+                    icon={CheckCircle2}
+                    label="Margin"
+                    value={`${profit.margin.toFixed(1)}%`}
+                    tone={profit.isProfit ? "profit" : "loss"}
+                  />
+                </>
               ) : null}
             </div>
           </div>
@@ -293,32 +341,20 @@ export default async function VehicleDetailPage({
               Actions
             </h3>
             <div className="mt-4 flex flex-col gap-2">
-              <Button
-                variant="outline"
-                disabled
-                title="Coming in Phase 3"
-                className="w-full h-9 text-[13px] justify-start"
-              >
-                Mark as Sold
-                <span className="ml-auto text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground/70">
-                  Phase 3
-                </span>
-              </Button>
-              <Button
-                variant="outline"
-                disabled
-                title="Coming in Phase 3"
-                className="w-full h-9 text-[13px] justify-start"
-              >
-                Mark as Paid Off
-                <span className="ml-auto text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground/70">
-                  Phase 3
-                </span>
-              </Button>
-              <DeleteVehicleButton
-                id={vehicle.id}
-                advanceAmount={Number(vehicle.advanceAmount)}
-              />
+              {isPaidOff ? (
+                <ReversePayoffButton
+                  vehicleId={vehicle.id}
+                  advanceAmount={advanceAmount}
+                />
+              ) : (
+                <>
+                  <MarkAsSoldButton vehicle={markAsSoldVehicle} />
+                  <DeleteVehicleButton
+                    id={vehicle.id}
+                    advanceAmount={advanceAmount}
+                  />
+                </>
+              )}
             </div>
           </div>
         </aside>
@@ -327,16 +363,33 @@ export default async function VehicleDetailPage({
   )
 }
 
+function SaleField({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <dt className="text-[10.5px] uppercase tracking-[0.12em] font-medium text-muted-foreground/80">
+        {label}
+      </dt>
+      <dd className="text-foreground">{children}</dd>
+    </div>
+  )
+}
+
 function Stat({
   icon: Icon,
   label,
   value,
-  highlight,
+  tone,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: string
-  highlight?: boolean
+  tone?: "profit" | "loss"
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -345,9 +398,12 @@ function Stat({
         {label}
       </span>
       <span
-        className={`tabular-nums font-medium ${
-          highlight ? "text-primary" : "text-foreground"
-        }`}
+        className={cn(
+          "tabular-nums font-medium",
+          tone === "profit" && "text-primary",
+          tone === "loss" && "text-destructive",
+          !tone && "text-foreground"
+        )}
       >
         {value}
       </span>
