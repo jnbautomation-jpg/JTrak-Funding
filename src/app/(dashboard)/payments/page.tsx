@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { differenceInCalendarDays } from "date-fns"
 import { ArrowUpRight, CalendarClock, Clock, Wallet } from "lucide-react"
@@ -21,6 +22,10 @@ import {
 } from "@/lib/floorplan"
 import { PaymentsRangeTabs } from "./_components/range-tabs"
 import { PaymentsPagination } from "./_components/pagination"
+
+export const metadata: Metadata = {
+  title: "Payments – JTrak Funding",
+}
 
 const PAGE_SIZE = 25
 

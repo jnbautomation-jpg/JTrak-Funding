@@ -102,7 +102,7 @@ export function AddVehicleButton({
         <Plus className="size-3.5" />
         Add Vehicle
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add vehicle</DialogTitle>
           <DialogDescription>
@@ -231,14 +231,14 @@ function AddVehicleForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="grid grid-cols-2 gap-3"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3"
         suppressHydrationWarning
       >
         <FormField
           control={form.control}
           name="vin"
           render={({ field }) => (
-            <FormItem className="col-span-2">
+            <FormItem className="sm:col-span-2">
               <div className="flex items-center justify-between">
                 <FormLabel className="text-[12px] font-medium text-muted-foreground">
                   VIN
@@ -352,7 +352,7 @@ function AddVehicleForm({
           control={form.control}
           name="trim"
           render={({ field }) => (
-            <FormItem className="col-span-2">
+            <FormItem className="sm:col-span-2">
               <FormLabel className="text-[12px] font-medium text-muted-foreground">
                 Trim
               </FormLabel>
@@ -457,7 +457,7 @@ function AddVehicleForm({
           control={form.control}
           name="notes"
           render={({ field }) => (
-            <FormItem className="col-span-2">
+            <FormItem className="sm:col-span-2">
               <FormLabel className="text-[12px] font-medium text-muted-foreground">
                 Notes
               </FormLabel>
@@ -475,7 +475,7 @@ function AddVehicleForm({
         />
 
         {overLimit ? (
-          <div className="col-span-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-[11.5px] text-amber-300">
+          <div className="sm:col-span-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-[11.5px] text-amber-700 dark:text-amber-300">
             ⚠️ This advance ({formatMoney(Number(purchasePrice))}) exceeds
             available credit ({formatMoney(availableCredit ?? 0)}). You&rsquo;ll
             be over your limit.
@@ -483,12 +483,12 @@ function AddVehicleForm({
         ) : null}
 
         {submitError ? (
-          <p className="col-span-2 text-[11.5px] text-destructive">
+          <p className="sm:col-span-2 text-[11.5px] text-destructive">
             {submitError}
           </p>
         ) : null}
 
-        <div className="col-span-2 flex justify-end gap-2 pt-1">
+        <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
           <Button type="submit" disabled={pending} className="h-9 text-[13px]">
             {pending ? (
               <>

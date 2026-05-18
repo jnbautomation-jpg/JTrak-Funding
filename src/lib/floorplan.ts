@@ -180,3 +180,92 @@ export async function getAvgDaysToPayoff(floorplanLineId: string) {
   }, 0)
   return Math.round(total / vehicles.length)
 }
+
+export async function getOutstandingBalanceAtDate(
+  floorplanLineId: string,
+  date: Date
+) {
+  const grouped = await prisma.transaction.groupBy({
+    by: ["type"],
+    where: { floorplanLineId, date: { lte: date } },
+    _sum: { amount: true },
+  })
+  let advances = 0
+  let payoffs = 0
+  let adjustments = 0
+  for (const row of grouped) {
+    const sum = Number(row._sum.amount ?? 0)
+    if (row.type === "advance") advances += sum
+    else if (row.type === "payoff") payoffs += sum
+    else if (row.type === "adjustment") adjustments += sum
+  }
+  return Math.max(0, advances - payoffs + adjustments)
+}
+
+export async function getTransactionsInRange(
+  floorplanLineId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  return prisma.transaction.findMany({
+    where: {
+      floorplanLineId,
+      date: { gte: startDate, lte: endDate },
+    },
+    orderBy: { date: "asc" },
+    include: {
+      vehicle: {
+        select: {
+          id: true,
+          year: true,
+          make: true,
+          model: true,
+          trim: true,
+          vin: true,
+          stockNumber: true,
+        },
+      },
+    },
+  })
+}
+
+export async function getPaidOffVehiclesInRange(
+  floorplanLineId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  return prisma.vehicle.findMany({
+    where: {
+      floorplanLineId,
+      status: "paid_off",
+      paidOffDate: { gte: startDate, lte: endDate },
+    },
+    orderBy: { paidOffDate: "desc" },
+  })
+}
+
+export async function getActiveVehiclesAtDate(
+  floorplanLineId: string,
+  date: Date
+) {
+  // A vehicle was "active" at `date` if it was purchased on/before that date
+  // AND either it hasn't been paid off, or was paid off after that date.
+  return prisma.vehicle.findMany({
+    where: {
+      floorplanLineId,
+      purchaseDate: { lte: date },
+      OR: [
+        { paidOffDate: null },
+        { paidOffDate: { gt: date } },
+      ],
+    },
+    orderBy: { purchaseDate: "asc" },
+  })
+}
+
+export async function getAllActiveInventory(floorplanLineId: string) {
+  return prisma.vehicle.findMany({
+    where: { floorplanLineId, status: "active" },
+    orderBy: { purchaseDate: "asc" },
+  })
+}

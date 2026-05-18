@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 
 import { getUser } from "@/lib/auth"
@@ -10,6 +11,10 @@ import {
 } from "@/components/ui/tabs"
 import { FloorplanForm } from "./floorplan-form"
 import { AccountPanel } from "./account-panel"
+
+export const metadata: Metadata = {
+  title: "Settings – JTrak Funding",
+}
 
 export default async function SettingsPage() {
   const user = await getUser()
@@ -39,11 +44,11 @@ export default async function SettingsPage() {
       </header>
 
       <Tabs defaultValue="floorplan" className="w-full">
-        <TabsList className="h-8">
-          <TabsTrigger value="floorplan" className="px-3 text-[12.5px]">
+        <TabsList className="h-8 w-full sm:w-fit">
+          <TabsTrigger value="floorplan" className="px-3 text-[12.5px] flex-1 sm:flex-initial">
             Floorplan
           </TabsTrigger>
-          <TabsTrigger value="account" className="px-3 text-[12.5px]">
+          <TabsTrigger value="account" className="px-3 text-[12.5px] flex-1 sm:flex-initial">
             Account
           </TabsTrigger>
         </TabsList>

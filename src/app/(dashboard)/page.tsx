@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { differenceInCalendarDays } from "date-fns"
 import {
@@ -33,6 +34,10 @@ import {
   getTotalProfitYTD,
 } from "@/lib/floorplan"
 
+export const metadata: Metadata = {
+  title: "Dashboard – JTrak Funding",
+}
+
 const AGING_TONES: Record<string, "good" | "neutral" | "warning" | "bad"> = {
   "0-30": "good",
   "31-60": "neutral",
@@ -45,7 +50,7 @@ function DaysPill({ days }: { days: number }) {
     days >= 90
       ? "border-destructive/30 bg-destructive/10 text-destructive"
       : days >= 60
-      ? "border-amber-400/30 bg-amber-400/10 text-amber-300"
+      ? "border-amber-400/30 bg-amber-400/10 text-amber-700 dark:text-amber-300"
       : "border-border/70 bg-muted text-muted-foreground"
   return (
     <span
@@ -133,18 +138,21 @@ export default async function DashboardPage() {
         }`}
       >
         <StatCard
+          index={0}
           label="Outstanding Balance"
           value={formatMoney(outstanding)}
           subtext={`of ${formatMoney(creditLimit)} line`}
           icon={Banknote}
         />
         <StatCard
+          index={1}
           label="Available Credit"
           value={formatMoney(available)}
           subtext={`${availablePct.toFixed(1)}% available`}
           icon={CircleDollarSign}
         />
         <StatCard
+          index={2}
           label="Active Vehicles"
           value={String(activeCount)}
           subtext={
@@ -156,6 +164,7 @@ export default async function DashboardPage() {
           accent={avgDays >= 60 ? "amber" : "default"}
         />
         <StatCard
+          index={3}
           label={`Total Profit ${profitYear}`}
           value={formatMoney(profitYTD)}
           subtext="across paid-off vehicles"

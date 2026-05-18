@@ -75,7 +75,7 @@ export function FloorplanForm({ initial }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="grid grid-cols-2 gap-4 rounded-lg border border-border/70 bg-card/60 p-5"
+      className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-border/70 bg-card/60 p-4 sm:p-5"
       suppressHydrationWarning
     >
       <Field label="Investor name" required>
@@ -116,7 +116,7 @@ export function FloorplanForm({ initial }: Props) {
           className="h-9 text-[13px] tabular-nums"
         />
       </Field>
-      <div className="col-span-2">
+      <div className="sm:col-span-2">
         <Field label="Investor notes">
           <textarea
             value={values.investorNotes}
@@ -128,10 +128,10 @@ export function FloorplanForm({ initial }: Props) {
       </div>
 
       {error ? (
-        <p className="col-span-2 text-[11.5px] text-destructive">{error}</p>
+        <p className="sm:col-span-2 text-[11.5px] text-destructive">{error}</p>
       ) : null}
 
-      <div className="col-span-2 flex justify-end">
+      <div className="sm:col-span-2 flex justify-end">
         <Button type="submit" disabled={pending} className="h-9 text-[13px]">
           {pending ? (
             <>

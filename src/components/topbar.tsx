@@ -43,10 +43,14 @@ function Breadcrumb() {
       aria-label="Breadcrumb"
       className="flex items-center gap-2 text-[13px] text-muted-foreground"
     >
-      <Link href="/" className="hover:text-foreground transition-colors">
+      {/* Hide the JTrak chevron crumb on mobile, just show the current page title */}
+      <Link
+        href="/"
+        className="hidden sm:inline hover:text-foreground transition-colors"
+      >
         JTrak
       </Link>
-      <ChevronRight className="size-3.5 text-muted-foreground/50" />
+      <ChevronRight className="hidden sm:inline size-3.5 text-muted-foreground/50" />
       <span className="text-foreground font-medium">{current}</span>
     </nav>
   )
@@ -182,10 +186,10 @@ export function Topbar({
       className={cn(
         "sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border/60",
         "bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        "px-4 sm:px-6 lg:px-8"
+        "px-3 sm:px-6 lg:px-8 no-print"
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <MobileNav stats={stats} />
         <Breadcrumb />
       </div>

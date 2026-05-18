@@ -68,7 +68,7 @@ function StatusBadge({ status }: { status: string }) {
     return (
       <Badge
         variant="outline"
-        className="border-zinc-500/30 bg-zinc-500/10 text-zinc-300"
+        className="border-zinc-500/30 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300"
       >
         Paid Off
       </Badge>
@@ -96,7 +96,7 @@ function DaysPill({ days }: { days: number }) {
     days >= 90
       ? "border-destructive/30 bg-destructive/10 text-destructive"
       : days >= 60
-      ? "border-amber-400/30 bg-amber-400/10 text-amber-300"
+      ? "border-amber-400/30 bg-amber-400/10 text-amber-700 dark:text-amber-300"
       : days >= 30
       ? "border-border/70 bg-muted text-muted-foreground"
       : "border-primary/30 bg-primary/10 text-primary"
@@ -196,7 +196,154 @@ export function VehiclesTable({ vehicles }: { vehicles: VehicleRow[] }) {
 
   return (
     <>
-      <div className="rounded-lg border border-border/70 bg-card/60 overflow-hidden">
+      {/* Mobile card view */}
+      <div className="md:hidden flex flex-col gap-3">
+        {vehicles.map((v) => {
+          const isPaidOff = v.status === "paid_off"
+          return (
+            <div
+              key={v.id}
+              onClick={() => handleRowClick(v.id)}
+              className="rounded-lg border border-border/70 bg-card/60 p-4 cursor-pointer hover:bg-accent/30 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="text-[13.5px] font-medium text-foreground truncate">
+                    {v.year} {v.make} {v.model}
+                    {v.trim ? (
+                      <span className="text-muted-foreground"> {v.trim}</span>
+                    ) : null}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {v.stockNumber ? `${v.stockNumber} · ` : ""}
+                    <span className="font-mono">…{v.vin.slice(-6)}</span>
+                  </p>
+                </div>
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-2"
+                >
+                  <StatusBadge status={v.status} />
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-[11.5px]">
+                <div>
+                  <p className="text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground/70">
+                    Purchase
+                  </p>
+                  <p className="mt-0.5 tabular-nums text-foreground">
+                    {formatMoney(v.purchasePrice)}
+                  </p>
+                </div>
+                {v.status === "paid_off" && v.salePrice != null ? (
+                  <div>
+                    <p className="text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground/70">
+                      Sale
+                    </p>
+                    <p className="mt-0.5 tabular-nums text-foreground">
+                      {formatMoney(v.salePrice)}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground/70">
+                      Days
+                    </p>
+                    <p className="mt-0.5">
+                      <DaysPill days={v.daysOnLot} />
+                    </p>
+                  </div>
+                )}
+                <div className="text-right">
+                  {v.status === "paid_off" && v.salePrice != null ? (
+                    <>
+                      <p className="text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground/70">
+                        Profit
+                      </p>
+                      <p className="mt-0.5">
+                        <ProfitCell row={v} />
+                      </p>
+                    </>
+                  ) : (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors ml-auto"
+                          aria-label="Actions"
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem
+                            className="text-[13px]"
+                            onClick={() => router.push(`/vehicles/${v.id}`)}
+                          >
+                            <Eye className="size-3.5" />
+                            View
+                          </DropdownMenuItem>
+                          {!isPaidOff ? (
+                            <>
+                              <DropdownMenuItem
+                                className="text-[13px]"
+                                onClick={() =>
+                                  router.push(`/vehicles/${v.id}?edit=1`)
+                                }
+                              >
+                                <Pencil className="size-3.5" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-[13px]"
+                                onClick={() =>
+                                  setSellTarget({
+                                    id: v.id,
+                                    vin: v.vin,
+                                    year: v.year,
+                                    make: v.make,
+                                    model: v.model,
+                                    trim: v.trim,
+                                    purchasePrice: v.purchasePrice,
+                                    advanceAmount: v.advanceAmount,
+                                    purchaseDate: v.purchaseDate,
+                                  })
+                                }
+                              >
+                                <Tag className="size-3.5" />
+                                Mark as Sold
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                variant="destructive"
+                                className="text-[13px]"
+                                onClick={() => setConfirmDelete(v)}
+                              >
+                                <Trash2 className="size-3.5" />
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <DropdownMenuItem
+                              variant="destructive"
+                              className="text-[13px]"
+                              onClick={() => setConfirmReverse(v)}
+                            >
+                              <RotateCcw className="size-3.5" />
+                              Reverse Payoff
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop / tablet table view */}
+      <div className="hidden md:block rounded-lg border border-border/70 bg-card/60 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border/60">

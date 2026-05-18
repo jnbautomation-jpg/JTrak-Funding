@@ -78,8 +78,8 @@ export function VehiclesToolbar({
         })}
       </div>
 
-      <div className="flex flex-1 items-center gap-2 lg:max-w-md lg:justify-end">
-        <div className="relative flex-1 lg:flex-initial lg:w-64">
+      <div className="flex flex-1 items-center gap-2 lg:max-w-md lg:justify-end flex-wrap">
+        <div className="relative flex-1 min-w-[140px] lg:flex-initial lg:w-64">
           <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}

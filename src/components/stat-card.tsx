@@ -13,6 +13,8 @@ type StatCardProps = {
   trend?: { direction: Trend; value: string }
   accent?: "default" | "amber" | "red"
   className?: string
+  /** Optional 0-indexed position for stagger animation. */
+  index?: number
 }
 
 export function StatCard({
@@ -23,6 +25,7 @@ export function StatCard({
   trend,
   accent = "default",
   className,
+  index,
 }: StatCardProps) {
   const sheen =
     accent === "amber"
@@ -31,11 +34,16 @@ export function StatCard({
       ? "stat-sheen-red"
       : "stat-sheen"
 
+  const animationStyle =
+    index != null ? { animationDelay: `${index * 50}ms` } : undefined
+
   return (
     <div
+      style={animationStyle}
       className={cn(
         "group relative flex flex-col justify-between overflow-hidden rounded-lg border border-border/70 p-5 min-h-[148px]",
         "transition-colors hover:border-border",
+        index != null && "animate-fade-up",
         sheen,
         className
       )}

@@ -45,7 +45,7 @@ function StatusBadge({ status }: { status: string }) {
     return (
       <Badge
         variant="outline"
-        className="border-zinc-500/30 bg-zinc-500/10 text-zinc-300"
+        className="border-zinc-500/30 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300"
       >
         Paid Off
       </Badge>
@@ -73,7 +73,7 @@ function TxBadge({ type }: { type: string }) {
     return (
       <Badge
         variant="outline"
-        className="gap-1 border-amber-400/30 bg-amber-400/10 text-amber-300 font-medium"
+        className="gap-1 border-amber-400/30 bg-amber-400/10 text-amber-700 dark:text-amber-300 font-medium"
       >
         <ArrowDownLeft className="size-3" />
         Advance

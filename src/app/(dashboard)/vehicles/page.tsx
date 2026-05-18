@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { differenceInCalendarDays } from "date-fns"
 
 import { prisma } from "@/lib/prisma"
@@ -10,6 +11,10 @@ import { Pagination } from "./_components/pagination"
 import { VehiclesEmptyState } from "./_components/empty-state"
 import { VehiclesToolbar } from "./_components/toolbar"
 import { VehiclesTable, type VehicleRow } from "./_components/vehicles-table"
+
+export const metadata: Metadata = {
+  title: "Vehicles – JTrak Funding",
+}
 
 const PAGE_SIZE = 25
 

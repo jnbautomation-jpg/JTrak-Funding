@@ -54,7 +54,7 @@ export function MarkAsSoldDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Mark as Sold</DialogTitle>
           {vehicle ? (
@@ -213,12 +213,12 @@ function MarkAsSoldForm({
           </dl>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="salePrice"
             render={({ field }) => (
-              <FormItem className="col-span-2">
+              <FormItem className="sm:col-span-2">
                 <FormLabel className="text-[12px] font-medium text-muted-foreground">
                   Sale price (USD)
                 </FormLabel>

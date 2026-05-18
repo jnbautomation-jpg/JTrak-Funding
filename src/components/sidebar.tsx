@@ -148,7 +148,7 @@ export function SidebarFooter({ stats }: { stats?: FooterStats }) {
 
 export function Sidebar({ stats }: { stats?: FooterStats }) {
   return (
-    <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[240px] flex-col bg-sidebar border-r border-sidebar-border">
+    <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[240px] flex-col bg-sidebar border-r border-sidebar-border no-print">
       <SidebarBrand />
       <SidebarNav />
       <SidebarFooter stats={stats} />
